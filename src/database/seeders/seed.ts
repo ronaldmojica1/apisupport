@@ -108,7 +108,8 @@ async function seed() {
       nombre: 'Administrador',
       correo: 'admin@demo.com',
       clave: 'admin123',
-      empresaId: empresas[0].id,
+      //empresaId: empresas[0].id,
+      rol: 'soporte',
     });
 
     await usuarioRepo.save(admin);  

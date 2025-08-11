@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Usuario } from './usuario.entity';
-import { Colaborador } from './colaborador.entity';
+//import { Colaborador } from './colaborador.entity';
 import { Categoria } from './categoria.entity';
 import { Prioridad } from './prioridad.entity';
 import { Herramienta } from './herramienta.entity';
@@ -50,11 +50,11 @@ export class Caso {
   @JoinColumn({ name: 'creado_por' })
   creador: Usuario;
 
-  @ManyToOne(() => Colaborador, (colaborador) => colaborador.casosAsignados, {
+  @ManyToOne(() => Usuario, (colaborador) => colaborador.casosAsignados, {
     nullable: true,
   })
   @JoinColumn({ name: 'asignado_a' })
-  colaboradorAsignado?: Colaborador;
+  colaboradorAsignado?: Usuario;
 
   @ManyToOne(() => Categoria, (categoria) => categoria.casos, {
     onDelete: 'CASCADE',
@@ -84,13 +84,13 @@ export class Caso {
   })
   comentarios: Comentario[];
 
-  @ManyToMany(() => Usuario, (usuario) => usuario.casosAsociados)
-  /*@JoinTable({
+  /*@ManyToMany(() => Usuario, (usuario) => usuario.casosAsociados)
+  @JoinTable({
     name: 'usuarios_casos',
     joinColumn: { name: 'caso_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'usuario_id', referencedColumnName: 'id' },
-  })*/
-  usuariosAsociados: Usuario[];
+  })
+  usuariosAsociados: Usuario[];*/
 
   @OneToMany(() => UsuarioCaso, (usuarioCaso) => usuarioCaso.caso)
   usuariosCasos: UsuarioCaso[];

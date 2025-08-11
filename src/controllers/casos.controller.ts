@@ -39,7 +39,21 @@ import {
     async findAll(@Query(ValidationPipe) query: QueryCasosDto) {
       return this.casosService.findAll(query);
     }
-  
+
+    @Get('mis-casos')
+    @ApiOperation({ summary: 'Obtener casos asignados al usuario autenticado' })
+    @ApiResponse({ status: 200, description: 'Lista de casos obtenida exitosamente' })
+    async findMyCases(@Request() req, @Query(ValidationPipe) query: QueryCasosDto) {
+      return this.casosService.findAllByUserId(req.user.id as number, query);
+    }
+
+    @Get('casos-empresa')
+    @ApiOperation({ summary: 'Obtener casos de la empresa del usuario autenticado' })
+    @ApiResponse({ status: 200, description: 'Lista de casos obtenida exitosamente' })
+    async findCasesByCompany(@Request() req, @Query(ValidationPipe) query: QueryCasosDto) {
+      return this.casosService.findAllByEmpresaId(req.user.empresaId as number, query);
+    }
+
     @Get('estadisticas')
     @ApiOperation({ summary: 'Obtener estadísticas de casos' })
     @ApiResponse({ status: 200, description: 'Estadísticas obtenidas exitosamente' })

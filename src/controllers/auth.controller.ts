@@ -4,17 +4,20 @@ import {
     Body,
     UseGuards,
     ValidationPipe,
+    Request
   } from '@nestjs/common';
   import {
     ApiTags,
     ApiOperation,
     ApiResponse,
     ApiBody,
+    ApiBearerAuth,
   } from '@nestjs/swagger';  
   import { AuthService } from '@/services/auth.service';
   import { LoginDto } from '@/dto/login.dto';
   import { RegisterDto } from '@/dto/register.dto';  
-  import { LocalAuthGuard } from '@/auth/guards/local-auth.guard';    
+  import { LocalAuthGuard } from '@/auth/guards/local-auth.guard'; 
+  import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';   
   
   @ApiTags('Autenticación')
   @Controller('auth')
@@ -40,6 +43,7 @@ import {
               nombre: { type: 'string' },
               correo: { type: 'string' },
               empresa: { type: 'object' },
+              rol: { type: 'string' }
             },
           },
         },
@@ -54,6 +58,8 @@ import {
     }
   
     @Post('register')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'Registrar nuevo usuario' })
     @ApiBody({ type: RegisterDto })
     @ApiResponse({
@@ -64,7 +70,7 @@ import {
       status: 409,
       description: 'El usuario ya existe',
     })
-    async register(@Body(ValidationPipe) registerDto: RegisterDto) {
-      return this.authService.register(registerDto);
+    async register(@Body(ValidationPipe) registerDto: RegisterDto,@Request() req) {
+      return this.authService.register(registerDto,req.user.rol as string);
     }
   }

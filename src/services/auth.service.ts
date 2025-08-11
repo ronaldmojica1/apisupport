@@ -21,7 +21,7 @@ import {
     async validateUser(correo: string, clave: string): Promise<Usuario | null> {
       const usuario = await this.usuarioRepository.findOne({
         where: { correo },
-        select: ['id', 'correo', 'nombre', 'clave', 'empresaId'],
+        select: ['id', 'correo', 'nombre', 'clave', 'empresaId', 'rol'],
         relations: ['empresa'],
       });
   
@@ -33,7 +33,7 @@ import {
     }
   
     async login(loginDto: LoginDto) {
-      console.log(loginDto)
+
       const usuario = await this.validateUser(loginDto.correo, loginDto.clave);
       if (!usuario) {
         throw new UnauthorizedException('Credenciales inválidas');
@@ -43,6 +43,8 @@ import {
         correo: usuario.correo,
         sub: usuario.id,
         nombre: usuario.nombre,
+        rol: usuario.rol,
+        empresaId: usuario.empresaId,
       };
   
       return {
@@ -53,11 +55,12 @@ import {
           nombre: usuario.nombre,
           correo: usuario.correo,
           empresa: usuario.empresa,
+          rol: usuario.rol,
         },
       };
     }
   
-    async register(registerDto: RegisterDto) {
+    async register(registerDto: RegisterDto,currentUserRole: string) {
       // Verificar si el usuario ya existe
       const existingUser = await this.usuarioRepository.findOne({
         where: { correo: registerDto.correo },
@@ -66,6 +69,18 @@ import {
       if (existingUser) {
         throw new ConflictException('El usuario ya existe con ese correo');
       }
+
+       // Validación de roles
+        if (
+          currentUserRole &&
+          currentUserRole === 'usuario' &&
+          registerDto.rol &&
+          registerDto.rol === 'soporte'
+        ) {
+          throw new UnauthorizedException(
+            'No tienes permisos para registrar un usuario con rol soporte',
+          );
+        }
   
       // Crear nuevo usuario
       const usuario = this.usuarioRepository.create(registerDto);
@@ -81,6 +96,8 @@ import {
         correo: userWithEmpresa?.correo,
         sub: userWithEmpresa?.id,
         nombre: userWithEmpresa?.nombre,
+        rol: userWithEmpresa?.rol,
+        empresaId: userWithEmpresa?.empresaId,
       };
   
       return {

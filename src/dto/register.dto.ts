@@ -30,4 +30,9 @@ import {
     @IsInt({ message: 'El ID de empresa debe ser un número entero' })
     @Min(1, { message: 'Debe seleccionar una empresa válida' })
     empresaId: number;
+
+    @ApiProperty({ example: 'usuario', enum: ['soporte', 'usuario'] })
+    @IsString({ message: 'El rol debe ser una cadena' })
+    @IsNotEmpty({ message: 'El rol es requerido' })
+    rol: string;
   }

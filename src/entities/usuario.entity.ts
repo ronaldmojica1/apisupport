@@ -30,8 +30,11 @@ export class Usuario {
   @Column({ length: 255, select: false })
   clave: string;
 
-  @Column({ name: 'empresa_id' })
+  @Column({ name: 'empresa_id', nullable: true })
   empresaId: number;
+
+  @Column({length: 50, default: 'usuario',enum: ['soporte', 'usuario']})
+  rol: string;
 
   @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, {
     onDelete: 'CASCADE',
@@ -42,8 +45,11 @@ export class Usuario {
   @OneToMany(() => Caso, (caso) => caso.creador)
   casosCreados: Caso[];
 
-  @ManyToMany(() => Caso, (caso) => caso.usuariosAsociados)
-  casosAsociados: Caso[];
+  @OneToMany(() => Caso, (caso) => caso.colaboradorAsignado)
+  casosAsignados: Caso[];
+
+  //@ManyToMany(() => Caso, (caso) => caso.usuariosAsociados)
+  //casosAsociados: Caso[];
 
   @OneToMany(() => UsuarioCaso, (usuarioCaso) => usuarioCaso.usuario)
   usuariosCasos: UsuarioCaso[];

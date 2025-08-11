@@ -78,7 +78,81 @@ import {
         totalPages: Math.ceil(total / limit),
       };
     }
-  
+    
+    async findAllByUserId(userId: number, query: QueryCasosDto) {
+      const { page = 1, limit = 10, search } = query;
+      const skip = (page - 1) * limit;  
+      const queryBuilder: SelectQueryBuilder<Caso> = this.casoRepository
+        .createQueryBuilder('caso')
+        .leftJoinAndSelect('caso.creador', 'creador')
+        .leftJoinAndSelect('caso.colaboradorAsignado', 'colaborador')
+        .leftJoinAndSelect('caso.categoria', 'categoria')
+        .leftJoinAndSelect('caso.prioridad', 'prioridad')
+        .leftJoinAndSelect('caso.herramienta', 'herramienta')
+        .leftJoinAndSelect('creador.empresa', 'empresa')
+        .where('caso.creadoPor = :userId', { userId })
+        .orWhere('caso.colaboradorAsignado = :userId', { userId })
+        .orderBy('caso.createdAt', 'DESC'); 
+      // Aplicar filtro de búsqueda
+      if (search) {
+        queryBuilder.andWhere(
+          '(caso.titulo LIKE :search OR caso.descripcion LIKE :search)',
+          { search: `%${search}%` },
+        );
+      } 
+      // Obtener total de registros
+      const total = await queryBuilder.getCount();
+
+      // Aplicar paginación
+      const casos = await queryBuilder.skip(skip).take(limit).getMany();
+
+      return {
+        casos,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    }
+
+    async findAllByEmpresaId(empresaId: number, query: QueryCasosDto) {
+      const { page = 1, limit = 10, search } = query;
+      const skip = (page - 1) * limit;
+
+      const queryBuilder: SelectQueryBuilder<Caso> = this.casoRepository
+        .createQueryBuilder('caso')
+        .leftJoinAndSelect('caso.creador', 'creador')
+        .leftJoinAndSelect('caso.colaboradorAsignado', 'colaborador')
+        .leftJoinAndSelect('caso.categoria', 'categoria')
+        .leftJoinAndSelect('caso.prioridad', 'prioridad')
+        .leftJoinAndSelect('caso.herramienta', 'herramienta')
+        .leftJoinAndSelect('creador.empresa', 'empresa')
+        .where('empresa.id = :empresaId', { empresaId })
+        .orderBy('caso.createdAt', 'DESC');
+
+      // Aplicar filtro de búsqueda
+      if (search) {
+        queryBuilder.andWhere(
+          '(caso.titulo LIKE :search OR caso.descripcion LIKE :search)',
+          { search: `%${search}%` },
+        );
+      }
+
+      // Obtener total de registros
+      const total = await queryBuilder.getCount();
+
+      // Aplicar paginación
+      const casos = await queryBuilder.skip(skip).take(limit).getMany();
+
+      return {
+        casos,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    }
+
     async findOne(id: number) {
       const caso = await this.casoRepository.findOne({
         where: { id },
@@ -92,7 +166,6 @@ import {
           'estados',
           'estados.estado',
           'comentarios',
-          'usuariosAsociados',
         ],
         order: {
           estados: { createdAt: 'DESC' },
