@@ -47,4 +47,10 @@ import {
     @IsInt({ message: 'El ID del colaborador debe ser un número entero' })
     @Min(1, { message: 'Debe seleccionar un colaborador válido' })
     asignadoA?: number;
+
+    @ApiProperty({ example: 1 })
+    @IsOptional()
+    @IsInt({ message: 'El ID de estado debe ser un número entero' })
+    @Min(1, { message: 'Debe seleccionar un estado válido' })
+    estadoId: number;
   }

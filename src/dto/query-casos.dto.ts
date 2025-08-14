@@ -36,10 +36,24 @@ export class QueryCasosDto {
   @Min(1)
   prioridadId?: number;
 
+  @ApiPropertyOptional({ example: 4 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  creadoPor?: number;
+
   @ApiPropertyOptional({ example: 2 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   asignadoA?: number;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  estadoId?: number;
 }

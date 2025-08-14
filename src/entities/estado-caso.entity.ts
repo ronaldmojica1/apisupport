@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Caso } from './caso.entity';
 import { Estado } from './estado.entity';
+import { Usuario } from './usuario.entity';
 
 @Entity('estados_casos')
 export class EstadoCaso {
@@ -21,6 +22,9 @@ export class EstadoCaso {
   @Column({ name: 'estado_id' })
   estadoId: number;
 
+  @Column({ name: 'usuario_id', nullable: true })
+  usuarioId: number;
+
   @ManyToOne(() => Caso, (caso) => caso.estados, {
     onDelete: 'CASCADE',
   })
@@ -32,6 +36,12 @@ export class EstadoCaso {
   })
   @JoinColumn({ name: 'estado_id' })
   estado: Estado;
+
+  @ManyToOne(() => Usuario, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'usuario_id' })
+  usuario: Usuario;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateComentarioDto {
@@ -6,4 +6,9 @@ export class CreateComentarioDto {
   @IsString({ message: 'El comentario debe ser una cadena' })
   @IsNotEmpty({ message: 'El comentario es requerido' })
   comentario: string;
+
+  @ApiProperty({ type: [Number], required: false, example: [1, 2, 3] })
+  @IsArray()
+  @IsOptional()
+  archivosIds?: number[];
 }

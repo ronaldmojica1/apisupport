@@ -10,7 +10,10 @@ import {
     EstadoCaso,
     Comentario,
     Estado,
+    Archivo,
   } from '../entities';
+  import * as fs from 'fs';
+  import * as path from 'path';
   import { CreateCasoDto } from '@/dto/create-caso.dto';
   import { UpdateCasoDto } from '@/dto/update-caso.dto';
   import { QueryCasosDto } from '@/dto/query-casos.dto';
@@ -28,7 +31,11 @@ import {
       private comentarioRepository: Repository<Comentario>,
       @InjectRepository(Estado)
       private estadoRepository: Repository<Estado>,
+      @InjectRepository(Archivo)
+      private archivoRepository: Repository<Archivo>,
     ) {}
+    
+    private readonly uploadDir = path.join(process.cwd(), 'uploads');
   
     async findAll(query: QueryCasosDto) {
       const { page = 1, limit = 10, search, categoriaId, prioridadId, asignadoA } = query;
@@ -42,6 +49,7 @@ import {
         .leftJoinAndSelect('caso.prioridad', 'prioridad')
         .leftJoinAndSelect('caso.herramienta', 'herramienta')
         .leftJoinAndSelect('creador.empresa', 'empresa')
+        .leftJoinAndSelect('caso.estado', 'estado')
         .orderBy('caso.createdAt', 'DESC');
   
       // Aplicar filtros
@@ -90,6 +98,7 @@ import {
         .leftJoinAndSelect('caso.prioridad', 'prioridad')
         .leftJoinAndSelect('caso.herramienta', 'herramienta')
         .leftJoinAndSelect('creador.empresa', 'empresa')
+        .leftJoinAndSelect('caso.estado', 'estado')
         .where('caso.creadoPor = :userId', { userId })
         .orWhere('caso.colaboradorAsignado = :userId', { userId })
         .orderBy('caso.createdAt', 'DESC'); 
@@ -127,6 +136,7 @@ import {
         .leftJoinAndSelect('caso.prioridad', 'prioridad')
         .leftJoinAndSelect('caso.herramienta', 'herramienta')
         .leftJoinAndSelect('creador.empresa', 'empresa')
+        .leftJoinAndSelect('caso.estado', 'estado')
         .where('empresa.id = :empresaId', { empresaId })
         .orderBy('caso.createdAt', 'DESC');
 
@@ -165,11 +175,16 @@ import {
           'herramienta',
           'estados',
           'estados.estado',
+          'estados.usuario',
+          'estado',
           'comentarios',
+          'comentarios.usuario',
+          'comentarios.archivos',
+          'archivos',
         ],
         order: {
           estados: { createdAt: 'DESC' },
-          comentarios: { createdAt: 'ASC' },
+          comentarios: { createdAt: 'DESC' },
         },
       });
   
@@ -197,6 +212,10 @@ import {
       if (estadoAbierto) {
         await this.estadoCasoRepository.save({
           casoId: savedCaso.id,
+          estadoId: estadoAbierto.id,
+        });
+        // Actualizar el campo estadoId en la tabla de casos
+        await this.casoRepository.update(savedCaso.id, {
           estadoId: estadoAbierto.id,
         });
       }
@@ -227,49 +246,71 @@ import {
       return { message: 'Caso eliminado exitosamente' };
     }
   
-    async updateEstado(id: number, updateEstadoDto: UpdateEstadoCasoDto) {
-      const caso = await this.casoRepository.findOne({ where: { id } });
-  
-      if (!caso) {
-        throw new NotFoundException(`Caso con ID ${id} no encontrado`);
-      }
-  
-      const estado = await this.estadoRepository.findOne({
-        where: { id: updateEstadoDto.estadoId },
-      });
-  
-      if (!estado) {
-        throw new BadRequestException('Estado no válido');
-      }
-  
-      const estadoCaso = this.estadoCasoRepository.create({
-        casoId: id,
-        estadoId: updateEstadoDto.estadoId,
-      });
-  
-      await this.estadoCasoRepository.save(estadoCaso);
-  
-      return { message: 'Estado del caso actualizado exitosamente' };
+    async updateEstado(id: number, updateEstadoDto: UpdateEstadoCasoDto, userId: number) {
+    const caso = await this.casoRepository.findOne({ where: { id } });
+
+    if (!caso) {
+      throw new NotFoundException(`Caso con ID ${id} no encontrado`);
+    }
+
+    const estado = await this.estadoRepository.findOne({
+      where: { id: updateEstadoDto.estadoId },
+    });
+
+    if (!estado) {
+      throw new BadRequestException('Estado no válido');
+    }
+
+    const estadoCaso = this.estadoCasoRepository.create(<EstadoCaso>{
+      casoId: id,
+      estadoId: updateEstadoDto.estadoId,
+      usuarioId: userId,
+    });
+
+    await this.estadoCasoRepository.save(estadoCaso);
+
+    // Actualizar el campo estadoId en la tabla de casos
+    await this.casoRepository.update(id, {
+      estadoId: updateEstadoDto.estadoId,
+    });
+
+    return { message: 'Estado del caso actualizado exitosamente' };
     }
   
-    async addComentario(id: number, createComentarioDto: CreateComentarioDto) {
-      const caso = await this.casoRepository.findOne({ where: { id } });
-  
-      if (!caso) {
-        throw new NotFoundException(`Caso con ID ${id} no encontrado`);
-      }
-  
-      const comentario = this.comentarioRepository.create({
-        ...createComentarioDto,
-        casoId: id,
-      });
-  
-      const savedComentario = await this.comentarioRepository.save(comentario);
-  
-      return {
-        message: 'Comentario agregado exitosamente',
-        comentario: savedComentario,
-      };
+    async addComentario(id: number, createComentarioDto: CreateComentarioDto, userId: number) {
+
+    const caso = await this.casoRepository.findOne({ where: { id } });
+
+    if (!caso) {
+      throw new NotFoundException(`Caso con ID ${id} no encontrado`);
+    }
+
+    const comentario = this.comentarioRepository.create({
+      ...createComentarioDto,
+      usuarioId: userId,
+      casoId: id,
+    });
+
+    const savedComentario = await this.comentarioRepository.save(comentario);
+
+    // Si hay archivos para vincular al comentario
+    if (createComentarioDto.archivosIds && createComentarioDto.archivosIds.length > 0) {
+      // Actualizar los archivos para vincularlos al comentario
+      await Promise.all(
+        createComentarioDto.archivosIds.map(async (archivoId) => {
+          const archivo = await this.archivoRepository.findOne({ where: { id: archivoId, casoId: id } });
+          if (archivo) {
+            archivo.comentarioId = savedComentario.id;
+            await this.archivoRepository.save(archivo);
+          }
+        })
+      );
+    }
+
+    return {
+      message: 'Comentario agregado exitosamente',
+      comentario: savedComentario,
+    };
     }
   
     async getEstadisticas() {
@@ -306,6 +347,88 @@ import {
         casosPorPrioridad,
         casosPorCategoria,
       };
+    }
+
+    async uploadArchivo(casoId: number, file: Express.Multer.File, comentarioId?: number) {
+    const caso = await this.findOne(casoId);
+    if (!caso) {
+      throw new NotFoundException(`Caso con ID ${casoId} no encontrado`);
+    }
+
+    // Verificar el comentario si se proporciona un ID
+    if (comentarioId) {
+      const comentario = await this.comentarioRepository.findOne({ 
+        where: { id: comentarioId, casoId } 
+      });
+      
+      if (!comentario) {
+        throw new NotFoundException(`Comentario con ID ${comentarioId} no encontrado para este caso`);
+      }
+    }
+
+    // Con Multer configurado, el archivo ya se ha guardado físicamente
+    // Solo necesitamos crear el registro en la base de datos
+    const archivo = this.archivoRepository.create({
+      casoId,
+      comentarioId: comentarioId || null,
+      nombre: file.originalname,
+      ruta: file.path.replace(/\\/g, '/').replace('uploads/', ''),
+      tipo: file.mimetype,
+      tamano: file.size,
+    });
+
+    await this.archivoRepository.save(archivo);
+    return archivo;
+    }
+
+    async getArchivos(casoId: number, comentarioId?: number) {
+    const caso = await this.findOne(casoId);
+    if (!caso) {
+      throw new NotFoundException(`Caso con ID ${casoId} no encontrado`);
+    }
+
+    const whereCondition: any = { casoId };
+    
+    // Si se proporciona un ID de comentario, filtrar por ese comentario
+    if (comentarioId) {
+      whereCondition.comentarioId = comentarioId;
+    }
+
+    return this.archivoRepository.find({      
+      where: whereCondition,
+      order: { createdAt: 'DESC' },
+      relations: ['comentario']
+    });
+    }
+
+    async getArchivo(id: number) {
+      const archivo = await this.archivoRepository.findOne({
+        where: { id },
+      });
+
+      if (!archivo) {
+        throw new NotFoundException(`Archivo con ID ${id} no encontrado`);
+      }
+
+      return archivo;
+    }
+
+    async deleteArchivo(id: number) {
+      const archivo = await this.getArchivo(id);
+      
+      try {
+        // Eliminar archivo físico
+        const filePath = path.join(this.uploadDir, archivo.ruta);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+
+        // Eliminar registro de la base de datos
+        await this.archivoRepository.remove(archivo);
+        return { message: 'Archivo eliminado correctamente' };
+      } catch (error) {
+        throw new BadRequestException(`Error al eliminar el archivo: ${error.message}`);
+      }
     }
   }
   

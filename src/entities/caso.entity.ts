@@ -4,7 +4,7 @@ import {
   Column,
   ManyToOne,
   OneToMany,
-  ManyToMany,
+  //ManyToMany,
   JoinColumn,  
   CreateDateColumn,
   UpdateDateColumn,
@@ -17,6 +17,8 @@ import { Herramienta } from './herramienta.entity';
 import { EstadoCaso } from './estado-caso.entity';
 import { Comentario } from './comentario.entity';
 import { UsuarioCaso } from './usuario-caso.entity';
+import { Estado } from './estado.entity';
+import { Archivo } from './archivo.entity';
 
 @Entity('casos')
 export class Caso {
@@ -44,6 +46,9 @@ export class Caso {
   @Column({ name: 'prioridad_id' })
   prioridadId: number;
 
+  @Column({ name: 'estado_id', nullable: true })
+  estadoId?: number;
+
   @ManyToOne(() => Usuario, (usuario) => usuario.casosCreados, {
     onDelete: 'CASCADE',
   })
@@ -61,6 +66,12 @@ export class Caso {
   })
   @JoinColumn({ name: 'categoria_id' })
   categoria: Categoria;
+
+  @ManyToOne(() => Estado, (estado) => estado.casos, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'estado_id' })
+  estado?: Estado;
 
   @ManyToOne(() => Prioridad, (prioridad) => prioridad.casos, {
     onDelete: 'CASCADE',
@@ -84,16 +95,13 @@ export class Caso {
   })
   comentarios: Comentario[];
 
-  /*@ManyToMany(() => Usuario, (usuario) => usuario.casosAsociados)
-  @JoinTable({
-    name: 'usuarios_casos',
-    joinColumn: { name: 'caso_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'usuario_id', referencedColumnName: 'id' },
-  })
-  usuariosAsociados: Usuario[];*/
-
   @OneToMany(() => UsuarioCaso, (usuarioCaso) => usuarioCaso.caso)
   usuariosCasos: UsuarioCaso[];
+
+  @OneToMany(() => Archivo, (archivo) => archivo.caso, {
+    cascade: true,
+  })
+  archivos: Archivo[];
 
   @CreateDateColumn()
   createdAt: Date;

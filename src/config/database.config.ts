@@ -12,6 +12,7 @@ import {
   UsuarioCaso,
   EstadoCaso,
   Comentario,
+  Archivo,
 } from '../entities';
 
 export const getDatabaseConfig = (
@@ -35,6 +36,7 @@ export const getDatabaseConfig = (
     UsuarioCaso,
     EstadoCaso,
     Comentario,
+    Archivo,
   ],
   //synchronize: configService.get<string>('NODE_ENV') === 'development',
   //dropSchema: configService.get<string>('NODE_ENV') === 'development',

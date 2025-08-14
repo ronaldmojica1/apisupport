@@ -9,3 +9,4 @@ export { UsuarioCaso } from './usuario-caso.entity';
 export { EstadoCaso } from './estado-caso.entity';
 export { Comentario } from './comentario.entity';
 export { Caso } from './caso.entity';
+export { Archivo } from './archivo.entity';

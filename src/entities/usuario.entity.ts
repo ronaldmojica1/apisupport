@@ -3,8 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
-  ManyToMany,
+  OneToMany,  
   JoinColumn,
   BeforeInsert,
   BeforeUpdate,
@@ -15,6 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { Empresa } from './empresa.entity';
 import { Caso } from './caso.entity';
 import { UsuarioCaso } from './usuario-caso.entity';
+import { Comentario } from './comentario.entity';
 
 @Entity('usuarios')
 export class Usuario {
@@ -53,6 +53,9 @@ export class Usuario {
 
   @OneToMany(() => UsuarioCaso, (usuarioCaso) => usuarioCaso.usuario)
   usuariosCasos: UsuarioCaso[];
+
+  @OneToMany(() => Comentario, (comentario) => comentario.usuario)
+  comentarios: Comentario[];
 
   @CreateDateColumn()
   createdAt: Date;

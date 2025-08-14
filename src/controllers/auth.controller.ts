@@ -4,7 +4,8 @@ import {
     Body,
     UseGuards,
     ValidationPipe,
-    Request
+    Request,    
+    Res
   } from '@nestjs/common';
   import {
     ApiTags,
@@ -18,6 +19,7 @@ import {
   import { RegisterDto } from '@/dto/register.dto';  
   import { LocalAuthGuard } from '@/auth/guards/local-auth.guard'; 
   import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';   
+  import type { Response } from 'express';
   
   @ApiTags('Autenticación')
   @Controller('auth')
@@ -53,8 +55,16 @@ import {
       status: 401,
       description: 'Credenciales inválidas',
     })
-    async login(@Body(ValidationPipe) loginDto: LoginDto) {
-      return this.authService.login(loginDto);
+    async login(@Body(ValidationPipe) loginDto: LoginDto,@Res({ passthrough: true }) res: Response) {
+      const result = await this.authService.login(loginDto);
+      res.cookie('accessToken', result.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 1000 * 60 * 15, // 15 minutos
+      });
+      return result
     }
   
     @Post('register')

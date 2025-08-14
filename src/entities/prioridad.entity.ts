@@ -16,6 +16,9 @@ export class Prioridad {
   @Column({ length: 255 })
   descripcion: string;
 
+  @Column({ length: 255 })
+  color: string;
+
   @OneToMany(() => Caso, (caso) => caso.prioridad)
   casos: Caso[];
 
