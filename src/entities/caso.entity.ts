@@ -49,6 +49,9 @@ export class Caso {
   @Column({ name: 'estado_id', nullable: true })
   estadoId?: number;
 
+  @Column({ default: false })
+  archivar: boolean;
+
   @ManyToOne(() => Usuario, (usuario) => usuario.casosCreados, {
     onDelete: 'CASCADE',
   })

@@ -50,6 +50,7 @@ import {
         .leftJoinAndSelect('caso.herramienta', 'herramienta')
         .leftJoinAndSelect('creador.empresa', 'empresa')
         .leftJoinAndSelect('caso.estado', 'estado')
+        .where('caso.archivar = :archivar', { archivar: false })
         .orderBy('caso.createdAt', 'DESC');
   
       // Aplicar filtros
@@ -99,8 +100,7 @@ import {
         .leftJoinAndSelect('caso.herramienta', 'herramienta')
         .leftJoinAndSelect('creador.empresa', 'empresa')
         .leftJoinAndSelect('caso.estado', 'estado')
-        .where('caso.creadoPor = :userId', { userId })
-        .orWhere('caso.colaboradorAsignado = :userId', { userId })
+        .where('(caso.creadoPor = :userId OR caso.asignadoA = :userId) AND caso.archivar = :archivar', { userId, archivar: false })
         .orderBy('caso.createdAt', 'DESC'); 
       // Aplicar filtro de búsqueda
       if (search) {
@@ -137,7 +137,7 @@ import {
         .leftJoinAndSelect('caso.herramienta', 'herramienta')
         .leftJoinAndSelect('creador.empresa', 'empresa')
         .leftJoinAndSelect('caso.estado', 'estado')
-        .where('empresa.id = :empresaId', { empresaId })
+        .where('empresa.id = :empresaId AND caso.archivar = :archivar', { empresaId, archivar: false })
         .orderBy('caso.createdAt', 'DESC');
 
       // Aplicar filtro de búsqueda
@@ -314,7 +314,7 @@ import {
     }
   
     async getEstadisticas() {
-      const totalCasos = await this.casoRepository.count();
+      const totalCasos = await this.casoRepository.count({ where: { archivar: false } });
       
       const casosPorEstado = await this.casoRepository
         .createQueryBuilder('caso')
@@ -322,6 +322,7 @@ import {
         .leftJoin('estadoCaso.estado', 'estado')
         .select('estado.descripcion', 'estado')
         .addSelect('COUNT(DISTINCT caso.id)', 'cantidad')
+        .where('caso.archivar = :archivar', { archivar: false })
         .groupBy('estado.descripcion')
         .getRawMany();
   
@@ -330,6 +331,7 @@ import {
         .leftJoin('caso.prioridad', 'prioridad')
         .select('prioridad.descripcion', 'prioridad')
         .addSelect('COUNT(caso.id)', 'cantidad')
+        .where('caso.archivar = :archivar', { archivar: false })
         .groupBy('prioridad.descripcion')
         .getRawMany();
   
@@ -338,6 +340,7 @@ import {
         .leftJoin('caso.categoria', 'categoria')
         .select('categoria.descripcion', 'categoria')
         .addSelect('COUNT(caso.id)', 'cantidad')
+        .where('caso.archivar = :archivar', { archivar: false })
         .groupBy('categoria.descripcion')
         .getRawMany();
   
@@ -429,6 +432,28 @@ import {
       } catch (error) {
         throw new BadRequestException(`Error al eliminar el archivo: ${error.message}`);
       }
+    }
+
+    async archivarCaso(id: number) {
+      const caso = await this.casoRepository.findOne({ where: { id } });
+  
+      if (!caso) {
+        throw new NotFoundException(`Caso con ID ${id} no encontrado`);
+      }
+  
+      await this.casoRepository.update(id, { archivar: true });
+      return { message: 'Caso archivado exitosamente' };
+    }
+
+    async desarchivarCaso(id: number) {
+      const caso = await this.casoRepository.findOne({ where: { id } });
+  
+      if (!caso) {
+        throw new NotFoundException(`Caso con ID ${id} no encontrado`);
+      }
+  
+      await this.casoRepository.update(id, { archivar: false });
+      return { message: 'Caso desarchivado exitosamente' };
     }
   }
   

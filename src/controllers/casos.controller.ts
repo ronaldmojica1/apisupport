@@ -206,4 +206,20 @@ import { UploadArchivoComentarioDto } from '@/dto/upload-archivo-comentario.dto'
     async deleteArchivo(@Param('id', ParseIntPipe) id: number) {
       return this.casosService.deleteArchivo(id);
     }
+
+    @Patch(':id/archivar')
+    @ApiOperation({ summary: 'Archivar caso' })
+    @ApiResponse({ status: 200, description: 'Caso archivado exitosamente' })
+    @ApiResponse({ status: 404, description: 'Caso no encontrado' })
+    async archivarCaso(@Param('id', ParseIntPipe) id: number) {
+      return this.casosService.archivarCaso(id);
+    }
+
+    @Patch(':id/desarchivar')
+    @ApiOperation({ summary: 'Desarchivar caso' })
+    @ApiResponse({ status: 200, description: 'Caso desarchivado exitosamente' })
+    @ApiResponse({ status: 404, description: 'Caso no encontrado' })
+    async desarchivarCaso(@Param('id', ParseIntPipe) id: number) {
+      return this.casosService.desarchivarCaso(id);
+    }
   }

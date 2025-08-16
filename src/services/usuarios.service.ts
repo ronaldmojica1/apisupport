@@ -21,8 +21,8 @@ export class UsuariosService {
   async findOne(id: number) {
     const usuario = await this.usuarioRepository.findOne({
       where: { id },
-      relations: ['empresa', 'casosCreados', 'casosAsociados'],
-      select: ['id', 'nombre', 'correo', 'empresaId', 'createdAt', 'updatedAt'],
+      relations: ['empresa', 'casosCreados'],
+      select: ['id', 'nombre', 'correo', 'empresaId', 'createdAt', 'updatedAt','rol'],
     });
 
     if (!usuario) {
