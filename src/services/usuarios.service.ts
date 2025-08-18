@@ -57,4 +57,12 @@ export class UsuariosService {
   async getProfile(userId: number) {
     return this.findOne(userId);
   }
+
+  async getColaboradores() {
+    return this.usuarioRepository.find({
+      where: { rol: 'soporte' },
+      relations: ['empresa'],
+      select: ['id', 'nombre', 'correo', 'empresaId', 'createdAt', 'updatedAt'],
+    });
+  }
 }

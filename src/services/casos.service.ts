@@ -51,7 +51,7 @@ import {
         .leftJoinAndSelect('creador.empresa', 'empresa')
         .leftJoinAndSelect('caso.estado', 'estado')
         .where('caso.archivar = :archivar', { archivar: false })
-        .orderBy('caso.createdAt', 'DESC');
+        .orderBy('caso.createdAt', 'ASC');
   
       // Aplicar filtros
       if (search) {
@@ -101,7 +101,7 @@ import {
         .leftJoinAndSelect('creador.empresa', 'empresa')
         .leftJoinAndSelect('caso.estado', 'estado')
         .where('(caso.creadoPor = :userId OR caso.asignadoA = :userId) AND caso.archivar = :archivar', { userId, archivar: false })
-        .orderBy('caso.createdAt', 'DESC'); 
+        .orderBy('caso.createdAt', 'ASC'); 
       // Aplicar filtro de búsqueda
       if (search) {
         queryBuilder.andWhere(
@@ -138,7 +138,7 @@ import {
         .leftJoinAndSelect('creador.empresa', 'empresa')
         .leftJoinAndSelect('caso.estado', 'estado')
         .where('empresa.id = :empresaId AND caso.archivar = :archivar', { empresaId, archivar: false })
-        .orderBy('caso.createdAt', 'DESC');
+        .orderBy('caso.createdAt', 'ASC');
 
       // Aplicar filtro de búsqueda
       if (search) {
@@ -307,10 +307,8 @@ import {
       );
     }
 
-    return {
-      message: 'Comentario agregado exitosamente',
-      comentario: savedComentario,
-    };
+    return savedComentario;
+  
     }
   
     async getEstadisticas() {
@@ -318,10 +316,10 @@ import {
       
       const casosPorEstado = await this.casoRepository
         .createQueryBuilder('caso')
-        .leftJoin('caso.estados', 'estadoCaso')
-        .leftJoin('estadoCaso.estado', 'estado')
+        .leftJoin('caso.estado', 'estado')
+        //.leftJoin('estadoCaso.estado', 'estado')
         .select('estado.descripcion', 'estado')
-        .addSelect('COUNT(DISTINCT caso.id)', 'cantidad')
+        .addSelect('COUNT(caso.id)', 'cantidad')
         .where('caso.archivar = :archivar', { archivar: false })
         .groupBy('estado.descripcion')
         .getRawMany();

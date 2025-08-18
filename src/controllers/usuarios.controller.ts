@@ -34,6 +34,13 @@ import {
       return this.usuariosService.findAll();
     }
   
+    @Get('colaboradores')
+    @ApiOperation({ summary: 'Obtener todos los colaboradores (usuarios con rol soporte)' })
+    @ApiResponse({ status: 200, description: 'Lista de colaboradores obtenida exitosamente' })
+    async getColaboradores() {
+      return this.usuariosService.getColaboradores();
+    }
+
     @Get('profile')
     @ApiOperation({ summary: 'Obtener perfil del usuario actual' })
     @ApiResponse({ status: 200, description: 'Perfil obtenido exitosamente' })
