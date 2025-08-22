@@ -2,13 +2,15 @@ import {
     Injectable,
     UnauthorizedException,
     ConflictException,
+    BadRequestException,
   } from '@nestjs/common';
   import { InjectRepository } from '@nestjs/typeorm';
   import { Repository } from 'typeorm';
   import { JwtService } from '@nestjs/jwt';
   import { Usuario } from '../entities/usuario.entity';
   import { LoginDto } from '@/dto/login.dto';
-  import { RegisterDto } from '@/dto/register.dto';    
+  import { RegisterDto } from '@/dto/register.dto';
+  import { ChangePasswordDto } from '@/dto/change-password.dto';    
   
   @Injectable()
   export class AuthService {
@@ -109,6 +111,33 @@ import {
           correo: userWithEmpresa?.correo,
           empresa: userWithEmpresa?.empresa,
         },
+      };
+    }
+
+    async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
+      const usuario = await this.usuarioRepository.findOne({
+        where: { id: userId },
+        select: ['id', 'correo', 'nombre', 'clave'],
+      });
+
+      if (!usuario) {
+        throw new UnauthorizedException('Usuario no encontrado');
+      }
+
+      const isCurrentPasswordValid = await usuario.validatePassword(changePasswordDto.claveActual);
+      if (!isCurrentPasswordValid) {
+        throw new BadRequestException('La contraseña actual es incorrecta');
+      }
+
+      if (changePasswordDto.claveActual === changePasswordDto.claveNueva) {
+        throw new BadRequestException('La nueva contraseña debe ser diferente a la actual');
+      }
+
+      usuario.clave = changePasswordDto.claveNueva;
+      await this.usuarioRepository.save(usuario);
+
+      return {
+        message: 'Contraseña cambiada exitosamente',
       };
     }
   }

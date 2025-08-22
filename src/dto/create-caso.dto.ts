@@ -53,4 +53,10 @@ import {
     @IsInt({ message: 'El ID de estado debe ser un número entero' })
     @Min(1, { message: 'Debe seleccionar un estado válido' })
     estadoId: number;
+
+    @ApiPropertyOptional({ example: 2 })
+    @IsOptional()
+    @IsInt({ message: 'El ID del Usuario que esta creando, (solo para rol soporte)' })
+    @Min(1, { message: 'Debe seleccionar un usuario válido' })
+    creadoPor?: number;
   }

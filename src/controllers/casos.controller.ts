@@ -83,7 +83,10 @@ import { UploadArchivoComentarioDto } from '@/dto/upload-archivo-comentario.dto'
       @Body(ValidationPipe) createCasoDto: CreateCasoDto,
       @Request() req,
     ) {      
-      return this.casosService.create(createCasoDto, req.user.id as number);
+      const userId = req.user.rol === 'soporte' && createCasoDto.creadoPor 
+        ? createCasoDto.creadoPor 
+        : req.user.id as number;
+      return this.casosService.create(createCasoDto, userId);
     }
   
     @Patch(':id')

@@ -5,7 +5,8 @@ import {
     UseGuards,
     ValidationPipe,
     Request,    
-    Res
+    Res,
+    Patch
   } from '@nestjs/common';
   import {
     ApiTags,
@@ -16,7 +17,8 @@ import {
   } from '@nestjs/swagger';  
   import { AuthService } from '@/services/auth.service';
   import { LoginDto } from '@/dto/login.dto';
-  import { RegisterDto } from '@/dto/register.dto';  
+  import { RegisterDto } from '@/dto/register.dto';
+  import { ChangePasswordDto } from '@/dto/change-password.dto';  
   import { LocalAuthGuard } from '@/auth/guards/local-auth.guard'; 
   import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';   
   import type { Response } from 'express';
@@ -82,5 +84,32 @@ import {
     })
     async register(@Body(ValidationPipe) registerDto: RegisterDto,@Request() req) {
       return this.authService.register(registerDto,req.user.rol as string);
+    }
+
+    @Patch('change-password')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Cambiar contraseña del usuario' })
+    @ApiBody({ type: ChangePasswordDto })
+    @ApiResponse({
+      status: 200,
+      description: 'Contraseña cambiada exitosamente',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string' },
+        },
+      },
+    })
+    @ApiResponse({
+      status: 400,
+      description: 'La contraseña actual es incorrecta o la nueva contraseña es igual a la actual',
+    })
+    @ApiResponse({
+      status: 401,
+      description: 'No autorizado',
+    })
+    async changePassword(@Body(ValidationPipe) changePasswordDto: ChangePasswordDto, @Request() req) {
+      return this.authService.changePassword(req.user.id as number, changePasswordDto);
     }
   }
